@@ -1,0 +1,17 @@
+bin/
+obj/
+output/
+.vs/
+*.dll
+*.exe
+*.pdb
+*.cache
+*.user
+*.suo
+*.whl
+*.zip
+*.tar.bz2
+fTetWild
+calculix/
+pytw/
+vcpkg/
