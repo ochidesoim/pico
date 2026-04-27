@@ -632,16 +632,13 @@ class VeloForgeApp(tk.Tk):
         self._set_status(f"✓ PASS — result ready: {os.path.basename(self._pass_vtu)}", GREEN)
 
     def _on_open_paraview(self):
-        # If no VTU was auto-found, let user pick one manually
-        vtu = self._pass_vtu
-        if not vtu or not os.path.isfile(vtu):
-            vtu = filedialog.askopenfilename(
-                title="Select result .vtu file",
-                initialdir=self._outdir_var.get() or ROOT_DIR,
-                filetypes=[("VTK Unstructured Grid", "*.vtu"), ("All", "*.*")])
-            if not vtu:
-                return
-            self._pass_vtu = vtu
+        # Always let user pick a file manually
+        vtu = filedialog.askopenfilename(
+            title="Select result .vtu file",
+            initialdir=self._outdir_var.get() or ROOT_DIR,
+            filetypes=[("VTK Unstructured Grid", "*.vtu"), ("All", "*.*")])
+        if not vtu:
+            return
 
         # Resolve ParaView executable
         pv_exe = getattr(self, "_pv_exe", "") or detect_paraview()
