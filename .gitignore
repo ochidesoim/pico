@@ -15,3 +15,5 @@ fTetWild
 calculix/
 pytw/
 vcpkg/
+build/
+*.spec

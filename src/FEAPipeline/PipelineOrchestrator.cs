@@ -7,8 +7,7 @@ namespace Leap71.VeloForge.FEA
 
     public sealed class PipelineOrchestrator
     {
-        private const string FTetWildExe    = @"D:\pico\fTetWild\build\Release\FloatTetwild_bin.exe";
-        private const string CcxExe         = @"D:\pico\calculix\CalculiX-2.21.0-win-x64\bin\ccx.exe";
+        // Tool paths are read from VeloConfig (loaded from VeloConfig.json at startup)
 
         private readonly string _stlPath;
         private readonly string _outputDir;
@@ -59,7 +58,7 @@ namespace Leap71.VeloForge.FEA
             {
                 Console.WriteLine($"[MESH] Running fTetWild → {Path.GetFileName(_mshFile)}");
                 var meshResult = await _proc.ExecuteAsync(
-                    FTetWildExe,
+                    VeloConfig.FTetWildExe,
                     $"--input \"{_stlPath}\" --output \"{_mshFile}\"",
                     _outputDir, 600);
                 if (meshResult.ExitCode != 0 || !File.Exists(_mshFile))
@@ -77,7 +76,7 @@ namespace Leap71.VeloForge.FEA
             // 4. Run CalculiX  (-i takes the base name, CWD = outputDir)
             Console.WriteLine($"[SOLV] Invoking CalculiX (-i {_baseName})...");
             var solveResult = await _proc.ExecuteAsync(
-                CcxExe,
+                VeloConfig.CcxExe,
                 $"-i {_baseName}",
                 _outputDir, 600);
 

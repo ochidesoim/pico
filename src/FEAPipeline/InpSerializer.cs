@@ -40,7 +40,7 @@ namespace Leap71.VeloForge.FEA
             // Material — Al 7075-T6
             sw.WriteLine("*MATERIAL,NAME=AL7075");
             sw.WriteLine("*ELASTIC");
-            sw.WriteLine("71700.0,0.33");
+            sw.WriteLine($"{VeloConfig.YoungsModulus:F1},{VeloConfig.PoissonRatio}");
             sw.WriteLine("*DENSITY");
             sw.WriteLine("2.81E-3");
 
@@ -56,7 +56,7 @@ namespace Leap71.VeloForge.FEA
             sw.WriteLine("*STATIC");
             sw.WriteLine("*CLOAD");
             
-            double forcePerNode = 6000.0 / axleNodes.Count;
+            double forcePerNode = VeloConfig.LoadN / axleNodes.Count;
             foreach(var id in axleNodes)
             {
                 sw.WriteLine($"{id},3,-{forcePerNode:F6}");

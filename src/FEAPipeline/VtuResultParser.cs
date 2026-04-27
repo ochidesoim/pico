@@ -13,7 +13,7 @@ namespace Leap71.VeloForge.FEA
     /// </summary>
     public sealed class VtuResultParser
     {
-        private const double YieldStrengthMpa = 503.0; // Al 7075-T6
+        // Yield strength is read from VeloConfig (defaults to Al 7075-T6: 503 MPa)
 
         // Locate the Python extractor script next to this assembly.
         private static readonly string ScriptPath = Path.Combine(
@@ -26,7 +26,7 @@ namespace Leap71.VeloForge.FEA
 
             (double peakMises, double maxDisp) = RunPythonExtractor(vtuPath);
 
-            double sf = YieldStrengthMpa / peakMises;
+            double sf = VeloConfig.YieldStrengthMpa / peakMises;
 
             Console.WriteLine($"[INFO] Peak von Mises: {peakMises:F4} MPa");
             Console.WriteLine($"[INFO] Max displacement: {maxDisp:F6} mm");
