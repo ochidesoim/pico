@@ -110,4 +110,5 @@ Library.Go(0.3f, () =>
         Log($"  Last candidates tried: {string.Join(", ", VeloConfig.ThicknessCandidates)} mm");
     }
     Log("╚══════════════════════════════════════════╝");
+    Environment.Exit(0);
 });
