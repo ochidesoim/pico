@@ -95,6 +95,10 @@ function Assert-Checksum {
     Write-OK "Checksum verified: $Label"
 }
 
+function Write-Step { param([string]$Msg) Write-Host "`n>>> $Msg" -ForegroundColor Cyan }
+function Write-Info { param([string]$Msg) Write-Host "    $Msg" -ForegroundColor Gray }
+function Write-OK   { param([string]$Msg) Write-Host "  + $Msg" -ForegroundColor Green }
+function Write-Fail { param([string]$Msg) Write-Host "  X $Msg" -ForegroundColor Red }
 
 Write-Host "`n+------------------------------------------+" -ForegroundColor Yellow
 Write-Host "|     VeloForge Installer Build Pipeline   |" -ForegroundColor Yellow
@@ -225,6 +229,23 @@ try {
         $dst = Join-Path $BinsDir $name
         Copy-Item -Path $src -Destination $dst -Force
         Write-Info "Copied $name -> dist\bins\"
+
+        # Also copy any .dll files in the same directory as the executable
+        $srcDir = Split-Path $src -Parent
+        if (Test-Path $srcDir) {
+            $dlls = Get-ChildItem -Path $srcDir -Filter "*.dll" -File
+            foreach ($dll in $dlls) {
+                Copy-Item -Path $dll.FullName -Destination $BinsDir -Force
+                Write-Info "Copied $($dll.Name) -> dist\bins\"
+            }
+        }
+    }
+
+    # Specifically copy gmpxx-4.dll if it exists in vcpkg
+    $gmpxxPath = Join-Path $RootDir "vcpkg\installed\x64-windows\bin\gmpxx-4.dll"
+    if (Test-Path $gmpxxPath) {
+        Copy-Item -Path $gmpxxPath -Destination $BinsDir -Force
+        Write-Info "Copied gmpxx-4.dll -> dist\bins\"
     }
 
     # Verify checksums for security-critical binaries

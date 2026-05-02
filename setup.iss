@@ -70,8 +70,9 @@ Source: "{#SourceDir}\dist\pipeline\*";                  DestDir: "{app}\pipelin
 Source: "{#SourceDir}\dist\bins\fTetWild.exe";           DestDir: "{app}\bins";     Flags: ignoreversion
 Source: "{#SourceDir}\dist\bins\ccx.exe";                DestDir: "{app}\bins";     Flags: ignoreversion
 Source: "{#SourceDir}\dist\bins\ccx2paraview.exe";       DestDir: "{app}\bins";     Flags: ignoreversion
+Source: "{#SourceDir}\dist\bins\*.dll";                  DestDir: "{app}\bins";     Flags: ignoreversion
 Source: "{#SourceDir}\configs\*";                        DestDir: "{app}\configs";  Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#SourceDir}\dist\redist\vc_redist.x64.exe";   DestDir: "{tmp}";          Flags: deleteafterinstall
+Source: "{#SourceDir}\dist\redist\vc_redist.x64.exe";    DestDir: "{tmp}";          Flags: deleteafterinstall
 
 ; =============================================================================
 [Icons]

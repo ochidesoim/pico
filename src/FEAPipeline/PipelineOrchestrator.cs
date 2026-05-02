@@ -57,10 +57,14 @@ namespace Leap71.VeloForge.FEA
             else
             {
                 Console.WriteLine($"[MESH] Running fTetWild → {Path.GetFileName(_mshFile)}");
+                var meshArgs = $"--input \"{_stlPath}\" --output \"{_mshFile}\"";
                 var meshResult = await _proc.ExecuteAsync(
                     VeloConfig.FTetWildExe,
-                    $"--input \"{_stlPath}\" --output \"{_mshFile}\"",
+                    meshArgs,
                     _outputDir, 600);
+                
+                LogDiagnostic("fTetWild", VeloConfig.FTetWildExe, meshArgs, meshResult.ExitCode, meshResult.Stderr, _mshFile);
+
                 if (meshResult.ExitCode != 0 || !File.Exists(_mshFile))
                     throw new Exception("fTetWild failed:\n" + meshResult.Stderr);
                 Console.WriteLine("[MESH] Meshing complete.");
@@ -75,10 +79,13 @@ namespace Leap71.VeloForge.FEA
 
             // 4. Run CalculiX  (-i takes the base name, CWD = outputDir)
             Console.WriteLine($"[SOLV] Invoking CalculiX (-i {_baseName})...");
+            var ccxArgs = $"-i {_baseName}";
             var solveResult = await _proc.ExecuteAsync(
                 VeloConfig.CcxExe,
-                $"-i {_baseName}",
+                ccxArgs,
                 _outputDir, 600);
+
+            LogDiagnostic("CalculiX (ccx)", VeloConfig.CcxExe, ccxArgs, solveResult.ExitCode, solveResult.Stderr, _frdFile);
 
             // CalculiX sometimes exits non-zero even on success; accept if .frd produced.
             if (solveResult.ExitCode != 0 && !File.Exists(_frdFile))
@@ -92,10 +99,13 @@ namespace Leap71.VeloForge.FEA
             File.WriteAllText(_frdFile, frdText);
 
             Console.WriteLine("[RESL] Converting .frd → .vtk and .vtu...");
+            var vtuArgs = $"-m ccx2paraview \"{_frdFile}\" vtk vtu";
             var vtuResult = await _proc.ExecuteAsync(
                 "python",
-                $"-m ccx2paraview \"{_frdFile}\" vtk vtu",
+                vtuArgs,
                 _outputDir, 120);
+
+            LogDiagnostic("ccx2paraview", "python", vtuArgs, vtuResult.ExitCode, vtuResult.Stderr, _vtuFile);
 
             if (vtuResult.ExitCode != 0)
                 throw new Exception(
@@ -130,6 +140,32 @@ namespace Leap71.VeloForge.FEA
             Console.WriteLine($"  Status:           {r.Status}");
             Console.WriteLine($"  Duration:         {duration:mm\\:ss}");
             Console.WriteLine("════════════════════════════════════════");
+        }
+
+        private void LogDiagnostic(string stepName, string binary, string args, int exitCode, string stderr, string expectedFile)
+        {
+            var logPath = Path.Combine(_outputDir, "pipeline_debug.log");
+            var stderrLines = string.IsNullOrWhiteSpace(stderr) 
+                ? Array.Empty<string>() 
+                : stderr.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            var stderrSnippet = string.Join(Environment.NewLine, System.Linq.Enumerable.Take(stderrLines, 20));
+
+            bool fileExists = File.Exists(expectedFile);
+
+            var msg = $@"
+========================================
+[DIAGNOSTIC: {stepName}]
+Binary: {binary}
+Args:   {args}
+ExitCode: {exitCode}
+Expected File: {expectedFile}
+Exists?: {fileExists}
+Stderr (first 20 lines):
+{stderrSnippet}
+========================================";
+
+            Console.WriteLine(msg);
+            File.AppendAllText(logPath, msg + Environment.NewLine);
         }
     }
 }

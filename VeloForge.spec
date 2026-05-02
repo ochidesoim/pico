@@ -5,7 +5,7 @@ a = Analysis(
     ['gui.py'],
     pathex=[],
     binaries=[],
-    datas=[('web\\out', 'web\\out'), ('dist\\pipeline\\pico.exe', 'pipeline'), ('configs', 'configs')],
+    datas=[('D:\\pico\\web\\out', 'web\\out'), ('D:\\pico\\dist\\pipeline\\pico.exe', 'pipeline'), ('D:\\pico\\configs', 'configs')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

@@ -254,7 +254,7 @@ build_installer.ps1 runs in order:
 ┌────────────────────────────────────────────────────────────┐
 │                                                            │
 │  Step 1: Build the login website                           │
-│  cd web && npm run build                                    │
+│  cd web && npm run build                                   │
 │  → Creates web/out/ (static HTML/CSS/JS files)             │
 │                                                            │
 │  Step 2: Build the C# simulation engine                    │

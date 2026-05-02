@@ -16,6 +16,11 @@ string configPath = Path.Combine(
     AppDomain.CurrentDomain.BaseDirectory,
     "config.json");
 
+if (!File.Exists(configPath))
+{
+    configPath = Path.Combine(Environment.CurrentDirectory, "config.json");
+}
+
 if (File.Exists(configPath))
     VeloConfig.LoadFromJson(configPath);
 

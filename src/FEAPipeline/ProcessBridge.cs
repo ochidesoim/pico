@@ -71,7 +71,25 @@ namespace Leap71.VeloForge.FEA
 
             pathDirs.Add(@"C:\Windows\System32");
             pathDirs.Add(existingPath);
-            psi.Environment["PATH"] = string.Join(";", pathDirs);
+            
+            string finalPath = string.Join(";", pathDirs);
+            
+            // Remove any existing path variables to avoid case-sensitivity duplication on Windows
+            var keysToRemove = new List<string>();
+            foreach (string key in psi.Environment.Keys)
+            {
+                if (key.Equals("PATH", StringComparison.OrdinalIgnoreCase))
+                {
+                    keysToRemove.Add(key);
+                }
+            }
+            foreach (var key in keysToRemove)
+            {
+                psi.Environment.Remove(key);
+            }
+            
+            // Set exactly one PATH variable
+            psi.Environment["PATH"] = finalPath;
 
             var sw = Stopwatch.StartNew();
             using var process = new Process { StartInfo = psi };
