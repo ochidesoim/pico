@@ -17,23 +17,31 @@ from pathlib import Path
 # When running as a .py script, they live at <ROOT_DIR>/web/out/.
 if getattr(sys, 'frozen', False):
     exe_dir = os.path.dirname(sys.executable)
-    if os.path.exists(os.path.join(exe_dir, "..", "pico.csproj")):
-        ROOT_DIR = os.path.abspath(os.path.join(exe_dir, ".."))
-    else:
-        ROOT_DIR = exe_dir
-    WEB_OUT_DIR = os.path.join(sys._MEIPASS, "web_out")
+    ROOT_DIR = exe_dir
+    # PyInstaller --add-data "web\out;web\out" puts files at _MEIPASS/web/out
+    WEB_OUT_DIR = os.path.join(sys._MEIPASS, "web", "out")
+    BINS_DIR    = os.path.join(exe_dir, "bins")
 else:
-    ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+    exe_dir  = os.path.dirname(os.path.abspath(__file__))
+    ROOT_DIR = exe_dir
     WEB_OUT_DIR = os.path.join(ROOT_DIR, "web", "out")
+    BINS_DIR    = os.path.join(ROOT_DIR, "dist", "bins")
 
 CONFIG_PATH = os.path.join(ROOT_DIR, "config.json")
+
+# Default output dir: user's Documents/VeloForge/output (never a hardcoded dev path)
+_DEFAULT_OUTPUT = os.path.join(os.path.expanduser("~"), "Documents", "VeloForge", "output")
+
+# Default tool paths: bins/ next to the exe when installed, dist/bins/ in dev
+_DEFAULT_FTET = os.path.join(BINS_DIR, "fTetWild.exe")
+_DEFAULT_CCX  = os.path.join(BINS_DIR, "ccx.exe")
 
 DEFAULTS = {
     "simulation": {
         "thicknessCandidates": [18, 20, 22],
         "safetyFactorTarget": 1.5,
         "loadN": 6000.0,
-        "outputDir": r"D:\pico\output"
+        "outputDir": _DEFAULT_OUTPUT
     },
     "material": {
         "youngsModulusMpa": 71700.0,
@@ -42,9 +50,9 @@ DEFAULTS = {
         "yieldStrengthMpa": 503.0
     },
     "tools": {
-        "fTetWildExe": r"D:\pico\fTetWild\build\Release\FloatTetwild_bin.exe",
-        "ccxExe": r"D:\pico\calculix\CalculiX-2.21.0-win-x64\bin\ccx.exe",
-        "outputDir": r"D:\pico\output",
+        "fTetWildExe": _DEFAULT_FTET,
+        "ccxExe":      _DEFAULT_CCX,
+        "outputDir":   _DEFAULT_OUTPUT,
         "paraviewExe": ""
     }
 }
@@ -353,7 +361,7 @@ class VeloForgeApp(tk.Tk):
         section_label(p, "Output Folder").pack(anchor="w", **pad)
         of = tk.Frame(p, bg=BG)
         of.pack(anchor="w", padx=20, pady=2, fill="x")
-        self._outdir_entry, self._outdir_var = make_entry(of, r"D:\pico\output", 36)
+        self._outdir_entry, self._outdir_var = make_entry(of, _DEFAULT_OUTPUT, 36)
         self._outdir_entry.pack(side="left")
         self._btn(of, "Browse", lambda: browse_folder(self._outdir_var), w=8).pack(side="left", padx=6)
 
@@ -391,7 +399,7 @@ class VeloForgeApp(tk.Tk):
         rf = tk.Frame(p, bg=BG)
         rf.pack(anchor="w", padx=20, pady=2, fill="x")
         self._ftet_entry, self._ftet_var = make_entry(
-            rf, r"D:\pico\fTetWild\build\Release\FloatTetwild_bin.exe", 48)
+            rf, _DEFAULT_FTET, 48)
         self._ftet_entry.pack(side="left")
         self._btn(rf, "Browse", lambda: browse_file(self._ftet_var), w=8).pack(side="left", padx=6)
 
@@ -400,7 +408,7 @@ class VeloForgeApp(tk.Tk):
         cf = tk.Frame(p, bg=BG)
         cf.pack(anchor="w", padx=20, pady=2, fill="x")
         self._ccx_entry, self._ccx_var = make_entry(
-            cf, r"D:\pico\calculix\CalculiX-2.21.0-win-x64\bin\ccx.exe", 48)
+            cf, _DEFAULT_CCX, 48)
         self._ccx_entry.pack(side="left")
         self._btn(cf, "Browse", lambda: browse_file(self._ccx_var), w=8).pack(side="left", padx=6)
 
@@ -659,11 +667,19 @@ class VeloForgeApp(tk.Tk):
             env = os.environ.copy()
             env["DOTNET_NOLOGO"] = "1"
             env["PYTHONUNBUFFERED"] = "1"
-            # Tell .NET to output UTF-8 so Windows cp1252 codec never mismatches
             env["DOTNET_SYSTEM_GLOBALIZATION_INVARIANT"] = "0"
             env["DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION"] = "1"
+
+            if getattr(sys, 'frozen', False):
+                # Installed: run the pre-built pico.exe directly — no .csproj needed
+                pico_exe = os.path.join(ROOT_DIR, "pipeline", "pico.exe")
+                cmd = [pico_exe]
+            else:
+                # Dev mode: use dotnet run from the source root
+                cmd = ["dotnet", "run"]
+
             self._proc = subprocess.Popen(
-                ["dotnet", "run"],
+                cmd,
                 cwd=ROOT_DIR,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
