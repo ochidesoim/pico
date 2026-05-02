@@ -92,10 +92,20 @@ namespace Leap71.VeloForge.FEA
             File.WriteAllText(_frdFile, frdText);
 
             Console.WriteLine("[RESL] Converting .frd → .vtu...");
-            await _proc.ExecuteAsync(
+            var vtuResult = await _proc.ExecuteAsync(
                 "python",
                 $"-m ccx2paraview \"{_frdFile}\" vtu",
                 _outputDir, 120);
+
+            if (vtuResult.ExitCode != 0)
+                throw new Exception(
+                    $"ccx2paraview failed (exit {vtuResult.ExitCode}):\n{vtuResult.Stderr}\n" +
+                    "Ensure ccx2paraview is installed: pip install ccx2paraview");
+
+            if (!File.Exists(_vtuFile))
+                throw new FileNotFoundException(
+                    $"ccx2paraview ran but .vtu not found at expected path: {_vtuFile}\n" +
+                    "The tool may have written the file with a different name (e.g. <name>0.vtu).");
 
             // 6. Parse VTU results
             Console.WriteLine("[RESL] Parsing VTU...");

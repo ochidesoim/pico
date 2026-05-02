@@ -17,14 +17,16 @@ namespace Leap71.VeloForge.FEA
             if (stlInfo.Length > 500L * 1024 * 1024)
                 throw new InvalidOperationException("STL exceeds 500MB limit");
 
-            // Binaries
-            if (!File.Exists(@"D:\pico\fTetWild\build\Release\FloatTetwild_bin.exe"))
-                throw new FileNotFoundException("fTetWild binary not found.");
-                
-            if (!File.Exists(@"D:\pico\calculix\CalculiX-2.21.0-win-x64\bin\ccx.exe"))
-                throw new FileNotFoundException("ccx.exe binary not found.");
+            // Binaries — paths come from VeloConfig (loaded from config.json at startup)
+            if (!File.Exists(VeloConfig.FTetWildExe))
+                throw new FileNotFoundException(
+                    $"fTetWild binary not found at: {VeloConfig.FTetWildExe}");
 
-            // ccx2paraview (installed in Python 3.11 Scripts)
+            if (!File.Exists(VeloConfig.CcxExe))
+                throw new FileNotFoundException(
+                    $"ccx.exe binary not found at: {VeloConfig.CcxExe}");
+
+            // ccx2paraview must be importable by Python
             var ccxResult = RunWhere("ccx2paraview");
             if (ccxResult == null)
                 throw new FileNotFoundException(
