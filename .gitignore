@@ -17,3 +17,4 @@ pytw/
 vcpkg/
 build/
 *.spec
+__pycache__/

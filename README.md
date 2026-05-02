@@ -30,14 +30,35 @@ The orchestrator loops through various part thicknesses (e.g., 18mm, 20mm, 22mm)
 3. Once the analysis solves, it assesses the Safety Factor against the material yield limit (503.0 MPa).
 4. **Result:** If the part succeeds (SF ≥ 1.5), the loop halts and saves the viable model (e.g. `brake_bracket_optimized.stl`), achieving a strictly validated design seamlessly.
 
+## Desktop GUI & Login Interface (`gui.py` / `web/`)
+
+VeloForge provides a desktop interface to configure the simulation, visualize progress, and authenticate users.
+
+* **Embedded Login Page (`web/`)**: Built with **Next.js** and **GSAP**, the login page provides a polished, aerospace-themed authentication interface. It is statically exported (`web/out/`) and bundled directly into the executable.
+* **Orchestrator Wrapper (`gui.py`)**: A standalone Python `tkinter` GUI that embeds a lightweight HTTP server to serve the login page. Once authenticated, the GUI allows users to configure material parameters, define loads, specify the output directory, and visually track the backend C# optimization sweep in real-time.
+* **PyInstaller Packaging**: The entire Python GUI and Next.js static build are packaged into a single standalone executable (`VeloForge.exe`), abstracting away the command line for end users.
+
 ## Quick Start
-1. Ensure the following binaries are on your system `PATH`:
+1. Ensure the following binaries are on your system `PATH` (or configured via the GUI):
    - `fTetWild.exe`
    - `ccx.exe` (CalculiX)
    - `ccx2paraview.exe`
-2. Run the application logic pointing to your output folder:
-   ```bash
-   dotnet run
-   ```
-3. Monitor the iteration progress and solver convergence over standard output.
-4. Retrieve the optimal `.stl` and generated simulation artifacts from the configured output directory.
+2. **Run the Application**:
+   - **Using the Executable:** Run the packaged `dist/VeloForge.exe`.
+   - **From Source:**
+     ```bash
+     # Build the frontend static export first
+     cd web && npm run build
+     cd ..
+     # Run the GUI
+     python gui.py
+     ```
+   *(Alternatively, you can run `dotnet run` directly to bypass the GUI and execute the core optimization loop headlessly).*
+3. Sign in via the browser interface.
+4. Configure your simulation parameters in the GUI and click **Run Simulation**.
+5. Monitor the iteration progress and solver convergence over standard output or via the GUI progress bar.
+6. Retrieve the optimal `.stl` and generated simulation artifacts from your configured output directory.
+
+## Dependencies
+
+For a complete list of libraries and versions used across the C#, Python, and Next.js environments, please see [`libraries.md`](libraries.md).

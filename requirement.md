@@ -1,434 +1,419 @@
-# VeloForge GUI — Implementation Phases
+# VeloForge Login Page — Implementation Phases
 
 ## OVERVIEW
-Add a GUI to VeloForge without touching
-existing codebase except ONE small change
-to Program.cs to read config.json.
+Static but visually complete login page.
+Matches VeloForge aerospace aesthetic exactly.
+Auth not functional — UI only for now.
+Can be wired to real backend later.
 
-Architecture:
-  gui.py        → tkinter GUI (new file)
-  config.json   → parameter bridge (new file)
-  Program.cs    → reads config.json (10 lines added)
-  Everything else → UNTOUCHED
+Stack:
+  Next.js (existing project)
+  Same design system as landing page
+  Bierika font · #0A0A0B · #FF6B00
 
 ---
 
-## PHASE 1 — config.json schema
-### Create this file in project root
+## PHASE 1 — Page scaffold
+### New file only. Nothing else touched.
 
-File: config.json
+Create: src/app/login/page.tsx
 
-{
-  "simulation": {
-    "thicknessCandidates": [18, 20, 22],
-    "safetyFactorTarget": 1.5,
-    "loadN": 6000.0,
-    "outputDir": "D:\\pico\\output"
-  },
-  "material": {
-    "youngsModulusMpa": 71700.0,
-    "poissonRatio": 0.33,
-    "densityGPerMm3": 0.00281,
-    "yieldStrengthMpa": 503.0
-  },
-  "tools": {
-    "fTetWildExe": "D:\\pico\\fTetWild\\build\\Release\\FloatTetwild_bin.exe",
-    "ccxExe": "D:\\pico\\calculix\\CalculiX-2.21.0-win-x64\\bin\\ccx.exe",
-    "outputDir": "D:\\pico\\output"
-  }
-}
+Full viewport · dark background #0A0A0B
+No navbar · no stats bar · no 3D canvas
+Standalone page completely
+
+Layout:
+  Two columns on desktop:
+
+  LEFT (45%):
+    Full height dark panel
+    VeloForge branding
+    Tagline
+    Background: subtle grid pattern
+    or faint 3D model screenshot
+    as static image
+
+  RIGHT (55%):
+    Login form centered vertically
+    background: #0A0A0B
+
+  Mobile (< 768px):
+    Single column
+    Left panel hidden
+    Form full width
+
+Route: localhost:3000/login
 
 Success criteria:
-  ✓ File exists in root
-  ✓ Valid JSON (validate at jsonlint.com)
-  ✓ All current hardcoded values match
+  ✓ Page loads at /login
+  ✓ Two column layout desktop
+  ✓ Single column mobile
+  ✓ No existing pages broken
 
 ---
 
-## PHASE 2 — Program.cs config reader
-### Only change to existing codebase
-### Add 10 lines at TOP of Program.cs
+## PHASE 2 — Left branding panel
 
-Add BEFORE Library.Go() call:
+LEFT PANEL content:
 
-using System.Text.Json;
+  Top:
+    VELOFORGE wordmark
+    Bierika · VELO white · FORGE #FF4500
+    font-size: clamp(36px, 4vw, 56px)
 
-// Read config.json if it exists
-string configPath = Path.Combine(
-  AppDomain.CurrentDomain.BaseDirectory,
-  "config.json"
-);
+    Above wordmark:
+    "COMPUTATIONAL ENGINEERING"
+    #FF6B00 · 10px · weight 300
+    letter-spacing: 0.25em
 
-if (File.Exists(configPath)) {
-  var json = File.ReadAllText(configPath);
-  var config = JsonDocument.Parse(json);
-  var sim = config.RootElement
-    .GetProperty("simulation");
-  var tools = config.RootElement
-    .GetProperty("tools");
-  var mat = config.RootElement
-    .GetProperty("material");
+  Middle:
+    Tagline:
+    "From parameters to
+     validated part.
+     Automatically."
+    white · 24px · weight 300
+    line-height: 1.6
 
-  // Override hardcoded values:
-  // Pass to relevant constructors
-  // via static Config class below
-}
+  Below tagline:
+    3 stat pills in a row:
+    ┌──────────┐ ┌──────────┐ ┌──────────┐
+    │ SF 1.847 │ │ 23 iter  │ │ −11.3%   │
+    │ validated│ │ to solve │ │ lighter  │
+    └──────────┘ └──────────┘ └──────────┘
+    border: 1px solid rgba(255,107,0,0.3)
+    background: rgba(255,107,0,0.04)
+    padding: 12px 16px
+    text: #FF6B00 · 11px · uppercase
 
-Create new file: src/Config.cs
+  Bottom:
+    "Trusted by engineers
+     building the next generation
+     of physical products."
+    #FF6B00 · 60% opacity · 12px
 
-public static class Config {
-  public static float[] ThicknessCandidates
-    = { 18f, 20f, 22f };
-  public static float SafetyFactor = 1.5f;
-  public static double LoadN = 6000.0;
-  public static string OutputDir
-    = @"D:\pico\output";
-  public static string FTetWildExe
-    = @"D:\pico\fTetWild\...";
-  public static string CcxExe
-    = @"D:\pico\calculix\...";
-  public static double YoungsModulus
-    = 71700.0;
-  public static double PoissonRatio = 0.33;
-  public static double YieldStrength
-    = 503.0;
-
-  public static void LoadFromJson(
-    string path) {
-    // reads config.json
-    // overwrites static values above
-  }
-}
-
-Then replace hardcoded values in:
-  Program.cs line 15  → Config.OutputDir
-  Program.cs line 16  → Config.ThicknessCandidates
-  Program.cs line 53  → Config.SafetyFactor
-  InpSerializer.cs 59 → Config.LoadN
-  InpSerializer.cs 43 → Config.YoungsModulus
-  VtuResultParser.cs 16 → Config.YieldStrength
-  PipelineOrchestrator.cs 10 → Config.FTetWildExe
-  PipelineOrchestrator.cs 11 → Config.CcxExe
-
-Files touched: Program.cs · Config.cs (new)
-               InpSerializer.cs · 
-               VtuResultParser.cs ·
-               PipelineOrchestrator.cs
-               (each 1 line change only)
+  Left border accent:
+    2px solid #FF6B00 · 30% opacity
+    full height · left edge of panel
 
 Success criteria:
-  ✓ dotnet run still works with config.json
-  ✓ dotnet run still works WITHOUT config.json
-    (falls back to hardcoded defaults)
-  ✓ Change thickness in config.json
-    run again · different result
+  ✓ Wordmark renders in Bierika
+  ✓ Stats pills visible
+  ✓ Panel feels like landing page
 
 ---
 
-## PHASE 3 — gui.py skeleton
-### New file in root folder
-### Python + tkinter (zero install needed)
+## PHASE 3 — Login form shell
 
-File: gui.py
+RIGHT PANEL form:
 
-import tkinter as tk
-from tkinter import ttk, filedialog
-import json · os · subprocess · threading
-
-Window: 600×700px
-Title: "VeloForge — Simulation Runner"
-Background: #1a1a1a (dark)
-Accent: #FF6B00 (orange)
-
-LAYOUT:
+  Max-width: 400px · centered
+  
   Header:
-    "VELOFORGE" · white · bold · 24px
-    "Computational Engineering Platform"
-    · orange · 11px
+    "SIGN IN" · Bierika · white · 28px
+    "Access your simulation workspace"
+    #FF6B00 · 12px · opacity 70%
+    margin-bottom: 32px
 
-  Tabs:
-    Tab 1: "SIMULATION"  ← default open
-    Tab 2: "MATERIAL"
-    Tab 3: "TOOLS"
+  SOCIAL AUTH BUTTONS:
 
-  Footer:
-    [ RUN SIMULATION ] button · orange bg
-    Status label · shows current state
+    [ G  Continue with Google ]
+    [ ⬡  Continue with GitHub ]
+
+    Button styling both:
+      width: 100%
+      height: 48px
+      background: rgba(255,255,255,0.04)
+      border: 1px solid rgba(255,255,255,0.12)
+      border-radius: 2px (sharp · aerospace)
+      color: white · 14px · weight 500
+      display: flex · align-items: center
+      gap: 12px
+      padding: 0 16px
+      cursor: pointer
+
+    Google button:
+      Icon: Google SVG logo · 18px
+      text: "Continue with Google"
+      On hover:
+        border-color: rgba(255,255,255,0.3)
+        background: rgba(255,255,255,0.08)
+
+    GitHub button:
+      Icon: GitHub SVG logo · 18px · white
+      text: "Continue with GitHub"
+      On hover:
+        border-color: rgba(255,107,0,0.5)
+        background: rgba(255,107,0,0.06)
+
+  DIVIDER:
+    ─────── OR ───────
+    line: 1px solid rgba(255,255,255,0.08)
+    "OR" · #FF6B00 · 11px · 
+    letter-spacing: 0.2em
+    centered between lines
 
 Success criteria:
-  ✓ python gui.py opens window
-  ✓ Window shows without errors
-  ✓ Dark theme renders correctly
-  ✓ All 3 tabs clickable
+  ✓ Both social buttons visible
+  ✓ Hover states work
+  ✓ Divider renders cleanly
+  ✓ Sharp corners · no border-radius
 
 ---
 
-## PHASE 4 — Simulation tab inputs
-### Tab 1 content
+## PHASE 4 — Email + password fields
 
-SIMULATION TAB fields:
+Below divider:
 
-  Thickness Candidates (mm):
-    Label: "THICKNESS SWEEP (mm)"
-    3 input boxes side by side:
-      Min: [18]  Mid: [20]  Max: [22]
-    Subtext: "Comma-separated values
-              to test in sequence"
+  EMAIL FIELD:
+    Label: "EMAIL ADDRESS"
+    · #FF6B00 · 9px · weight 400
+    · letter-spacing: 0.15em · uppercase
+    · margin-bottom: 6px
 
-  Safety Factor Target:
-    Label: "SAFETY FACTOR TARGET"
-    Input: [1.5]
-    Subtext: "Minimum acceptable SF
-              (Al 7075-T6 yield: 503 MPa)"
+    Input:
+      type: email
+      placeholder: "engineer@company.com"
+      width: 100% · height: 48px
+      background: rgba(255,255,255,0.04)
+      border: 1px solid rgba(255,107,0,0.2)
+      border-radius: 2px
+      color: white · 14px
+      padding: 0 16px
+      outline: none
 
-  Load Force:
-    Label: "APPLIED LOAD (N)"
-    Input: [6000]
-    Subtext: "Vertical bump load
-              at axle bore nodes"
+    On focus:
+      border-color: #FF6B00
+      box-shadow: 0 0 0 3px
+        rgba(255,107,0,0.1)
 
-  Output Directory:
-    Label: "OUTPUT FOLDER"
-    Input: [D:\pico\output]
-    [ Browse ] button → opens folder picker
+    On error:
+      border-color: #FF2200
+      shake animation · 0.3s
 
-All fields:
-  Dark input bg: #2a2a2a
-  Orange border on focus
-  White text
-  Orange label text · 9px · uppercase
-  letter-spacing: 2px
+  PASSWORD FIELD:
+    Label: "PASSWORD"
+    Same styling as email label
+
+    Input:
+      type: password
+      placeholder: "••••••••••••"
+      Same styling as email input
+
+    Show/hide toggle:
+      Eye icon · right side of input
+      #FF6B00 · 16px
+      Click toggles type
+        password ↔ text
+
+  FORGOT PASSWORD:
+    Right-aligned below password:
+    "Forgot password?"
+    #FF6B00 · 12px · underline on hover
+    cursor: pointer
+
+  [ SIGN IN ] BUTTON:
+    width: 100% · height: 48px
+    background: #FF6B00
+    color: #0A0A0B · weight 700
+    font-size: 13px
+    letter-spacing: 0.15em · uppercase
+    border: none · border-radius: 2px
+    cursor: pointer
+    margin-top: 24px
+
+    On hover:
+      background: #FF4500
+      transform: none (no movement)
+
+    On click (UI only):
+      Shows loading state:
+        Spinner inside button
+        text: "AUTHENTICATING..."
+        button disabled
+      After 1.5s:
+        Shows error state:
+        "Invalid credentials"
+        · red · below button
+        (since not wired to backend)
 
 Success criteria:
-  ✓ All fields show default values
-  ✓ Browse button opens folder dialog
-  ✓ Values editable by user
-  ✓ Input validation:
-      thickness: numbers only
-      safety factor: 0.1 to 10.0
-      load: positive number only
+  ✓ Email + password fields styled
+  ✓ Focus states work
+  ✓ Show/hide password works
+  ✓ Sign in button loading state
+  ✓ Error message appears after 1.5s
 
 ---
 
-## PHASE 5 — Material + Tools tabs
-### Tab 2 and Tab 3 content
+## PHASE 5 — Sign up section
 
-MATERIAL TAB fields:
-  Young's Modulus (MPa): [71700]
-  Poisson's Ratio:       [0.33]
-  Density (g/mm³):       [0.00281]
-  Yield Strength (MPa):  [503.0]
+Below [ SIGN IN ] button:
 
-  Info box below fields:
-    "Default: Aluminum 7075-T6
-     Do not change unless using
-     a different material"
-    · orange border · dark bg
+  SIGN UP LINK:
+    "Don't have an account?"
+    white · 13px · opacity 60%
+    " Request access →"
+    #FF6B00 · 13px · weight 600
+    cursor: pointer
+    On click: shows sign up form
+              (toggle · no new page)
 
-TOOLS TAB fields:
-  fTetWild Executable:
-    Input + [ Browse ] → file picker
-    Default: D:\pico\fTetWild\...
+  SIGN UP FORM (hidden by default):
+    Slides down smoothly when toggled:
+      gsap.fromTo(signUpForm,
+        { height: 0, autoAlpha: 0 },
+        { height: "auto", autoAlpha: 1,
+          duration: 0.4,
+          ease: "power2.out" }
+      )
 
-  CalculiX Executable:
-    Input + [ Browse ] → file picker
-    Default: D:\pico\calculix\...
+    Fields:
+      FULL NAME input
+      EMAIL ADDRESS input
+      PASSWORD input
+      CONFIRM PASSWORD input
 
-  Validate button:
-    [ VALIDATE TOOL PATHS ]
-    Checks both .exe files exist
-    Shows green ✓ or red ✗ per tool
+    [ CREATE ACCOUNT ] button:
+      Same style as SIGN IN button
+      On click:
+        Loading state 1.5s
+        Then: "Account created.
+               Check your email."
+        · green · #00FF88
+
+    Already have account?
+      "Back to sign in →"
+      Collapses form back up
 
 Success criteria:
-  ✓ Material values editable
-  ✓ Tool path browse buttons work
-  ✓ Validate button checks files exist
-  ✓ Green tick or red cross shown
+  ✓ Toggle shows/hides signup form
+  ✓ Slide animation smooth
+  ✓ All 4 fields present
+  ✓ Create account button works
+  ✓ Success message shows
 
 ---
 
-## PHASE 6 — config.json save/load
-### GUI reads and writes config.json
+## PHASE 6 — Aerospace cursor + micro details
 
-On startup:
-  If config.json exists:
-    Load values into all fields
-  Else:
-    Show hardcoded defaults
+CURSOR:
+  Same aerospace crosshair cursor
+  as in D:\Landing page
+  Import existing AerospaceCursor component
+  Active on login page too
 
-On [ RUN SIMULATION ] click:
-  Step 1: validate all fields
-  Step 2: write config.json:
-    {
-      "simulation": {
-        "thicknessCandidates":
-          [value1, value2, value3],
-        "safetyFactorTarget": value,
-        "loadN": value,
-        "outputDir": "path"
-      },
-      "material": { ... },
-      "tools": { ... }
-    }
-  Step 3: confirm file written
-  Step 4: proceed to Phase 7
+MICRO DETAILS:
 
-Save/Load buttons in header:
-  [ SAVE CONFIG ] → saves current fields
-                    to config.json
-  [ LOAD CONFIG ] → opens file picker
-                    loads any config.json
+  Top right corner:
+    Small system status indicator:
+    "● SYSTEM ONLINE"
+    · #00FF88 · 9px · opacity 60%
+    · dot blinks slowly
+
+  Bottom left:
+    "VELOFORGE v1.0.0"
+    #FF6B00 · 9px · opacity 30%
+
+  Bottom right:
+    "256-bit encrypted"
+    + small lock icon
+    #FF6B00 · 9px · opacity 30%
+
+  Background texture (left panel):
+    Very faint engineering grid:
+      SVG grid lines
+      stroke: #FF6B00 · opacity 3%
+      10px × 10px squares
+      covers entire left panel
+
+  Page load animation:
+    On mount:
+    gsap.from(".login-form > *", {
+      autoAlpha: 0,
+      y: 16,
+      stagger: 0.08,
+      duration: 0.5,
+      ease: "power2.out"
+    })
 
 Success criteria:
-  ✓ config.json written correctly
-  ✓ Reopen GUI → values restored
-  ✓ Load different config → fields update
-  ✓ Invalid values show error message
-    before writing
+  ✓ Aerospace cursor active
+  ✓ System status blinks
+  ✓ Version label visible
+  ✓ Grid texture on left panel
+  ✓ Form elements stagger in on load
 
 ---
 
-## PHASE 7 — Run simulation + live output
-### The main feature
+## PHASE 7 — Mobile responsive
 
-[ RUN SIMULATION ] button behavior:
+At 768px and below:
 
-  Button disables → shows "RUNNING..."
-  Status: "Initializing pipeline..."
+  Left panel: hidden completely
+  Right panel: full width · full height
+  Form: max-width 360px · centered
 
-  Runs in background thread:
-    subprocess.Popen(
-      ["dotnet", "run"],
-      cwd=project_root,
-      stdout=PIPE,
-      stderr=STDOUT
-    )
+  Top of mobile form:
+    Show condensed branding:
+    VELOFORGE wordmark · smaller
+    "COMPUTATIONAL ENGINEERING"
+    margin-bottom: 32px
 
-  OUTPUT PANEL appears below button:
-    Scrollable text area · dark bg
-    Monospace font · 11px
-    Each stdout line appends in realtime
+  All inputs: full width
+  Font sizes: slightly larger for touch
+  Buttons: height 52px (bigger tap target)
 
-    Lines colored by prefix:
-      [MESH]  → #00CFFF cyan
-      [FEA]   → #FF6B00 orange
-      [SOLVE] → #FFAA00 yellow
-      [PASS]  → #00FF88 green
-      [FAIL]  → #FF2200 red
-      [DONE]  → #FFFFFF white
+  Social buttons: stack vertically
+    Google on top
+    GitHub below
+    Gap: 12px
 
-  Progress bar:
-    Fills as known steps complete:
-      Geometry built:    25%
-      Mesh complete:     50%
-      Solver converged:  75%
-      Result parsed:     100%
-
-  On completion:
-    If PASS:
-      Status: "✓ VALIDATED — SF: X.XXX"
-              green text
-      [ OPEN IN PARAVIEW ] button appears
-        → subprocess.Popen(paraview result.vtu)
-
-    If FAIL:
-      Status: "✗ NO VALID DESIGN FOUND"
-              red text
-      Shows best SF achieved
-
-  [ CANCEL ] button:
-    Kills subprocess
-    Status: "Cancelled"
+gsap.matchMedia():
+  isDesktop: "(min-width: 768px)"
+  isMobile: "(max-width: 767px)"
+  Apply different stagger animations
+  per breakpoint
 
 Success criteria:
-  ✓ Output streams live not after finish
-  ✓ Colors match line prefixes
-  ✓ Progress bar moves
-  ✓ PASS shows green + Paraview button
-  ✓ FAIL shows red + best SF
-  ✓ Cancel kills the process
-
----
-
-## PHASE 8 — Paraview auto-open
-### Opens result in Paraview automatically
-
-On PASS:
-  Find result .vtu file in output folder
-  Detect Paraview installation:
-    Check common paths:
-      C:\Program Files\ParaView*\bin\paraview.exe
-      /usr/bin/paraview
-      /Applications/ParaView*.app
-
-  If found:
-    Auto-open: subprocess.Popen([paraview, vtu])
-    Status: "Opening in Paraview..."
-
-  If not found:
-    Show dialog:
-      "Paraview not found.
-       Please select paraview.exe"
-    File picker → remember path
-    Save to config.json as:
-      "paraviewExe": "path/to/paraview.exe"
-
-Success criteria:
-  ✓ .vtu file found automatically
-  ✓ Paraview opens with result loaded
-  ✓ If not found → file picker shown
-  ✓ Path saved so not asked again
-
----
-
-## PHASE 9 — Polish + packaging
-### Make it distributable
-
-Window polish:
-  App icon: VeloForge logo (orange V)
-  Taskbar icon set
-  Window min size: 600×700
-  Resizable: yes · responsive layout
-
-Error handling:
-  dotnet not installed → clear message
-  Output folder missing → auto-create
-  Tool not found → highlight Tools tab
-  JSON parse error → show which field
-
-Package as .exe (Windows):
-  pip install pyinstaller
-  pyinstaller --onefile --windowed
-    --icon=logo.ico gui.py
-  Output: dist/VeloForge.exe
-  Double-click to run
-  No Python install needed
-
-README update:
-  Add "GUI Usage" section
-  Screenshot of window
-  How to change parameters
-
-Success criteria:
-  ✓ VeloForge.exe runs on clean Windows
-  ✓ No terminal window visible
-  ✓ All phases work end to end
-  ✓ Non-technical person can use it
+  ✓ Left panel hidden on mobile
+  ✓ VeloForge branding shows at top
+  ✓ All inputs full width
+  ✓ Buttons larger for touch
+  ✓ No horizontal scroll
 
 ---
 
 ## EXECUTION ORDER
 
-Phase 1 → config.json schema
-Phase 2 → Program.cs config reader
-Phase 3 → gui.py window skeleton
-Phase 4 → Simulation tab inputs
-Phase 5 → Material + Tools tabs
-Phase 6 → Save/load config.json
-Phase 7 → Run + live output stream
-Phase 8 → Paraview auto-open
-Phase 9 → Polish + package as .exe
+Phase 1 → Page scaffold + routing
+Phase 2 → Left branding panel
+Phase 3 → Social auth buttons
+Phase 4 → Email + password fields
+Phase 5 → Sign up toggle section
+Phase 6 → Cursor + micro details
+Phase 7 → Mobile responsive
 
-Test after EACH phase before proceeding.
+Test after EACH phase.
+Screenshot after each.
 Never skip a phase.
-Never run phases simultaneously.
+
+---
+
+## SKILLS TO READ PER PHASE
+
+All phases:
+  @frontend-design
+  @brand-brief
+
+Phases 4 5 6:
+  @gsap-core
+
+Phase 7:
+  @gsap-core (matchMedia)
+
+Paste at top of every prompt:
+  Before executing read:
+  @frontend-design @brand-brief @gsap-core
+  Read PROJECT_CONTEXT.md first.
+  Do NOT touch any existing pages.
+  Only create/modify login page files.

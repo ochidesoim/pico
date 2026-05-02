@@ -5,19 +5,26 @@ python gui.py  (tkinter, zero extra installs)
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import json, os, subprocess, threading, glob, sys
+import http.server
+import socketserver
+import socket
+import webbrowser
+import urllib.parse
+from pathlib import Path
 
-# Determine project root handling PyInstaller temporary _MEIPASS folder
+# ── Resolve the bundled web/out directory ─────────────────────────────────
+# When running as a PyInstaller exe, static assets live in _MEIPASS/web_out/.
+# When running as a .py script, they live at <ROOT_DIR>/web/out/.
 if getattr(sys, 'frozen', False):
-    # Running as compiled .exe
     exe_dir = os.path.dirname(sys.executable)
-    # If in /dist, parent is root. Otherwise assume exe is in root.
     if os.path.exists(os.path.join(exe_dir, "..", "pico.csproj")):
         ROOT_DIR = os.path.abspath(os.path.join(exe_dir, ".."))
     else:
         ROOT_DIR = exe_dir
+    WEB_OUT_DIR = os.path.join(sys._MEIPASS, "web_out")
 else:
-    # Running as .py script
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+    WEB_OUT_DIR = os.path.join(ROOT_DIR, "web", "out")
 
 CONFIG_PATH = os.path.join(ROOT_DIR, "config.json")
 
@@ -71,6 +78,96 @@ LINE_COLORS = {
     "[ERROR]": RED,
     "[WARN]":  YELL,
 }
+
+# ── Embedded login HTTP server ────────────────────────────────────────────
+
+def _get_free_port() -> int:
+    """Return a random free TCP port on localhost."""
+    with socket.socket() as s:
+        s.bind(('127.0.0.1', 0))
+        return s.getsockname()[1]
+
+
+class _AuthHandler(http.server.SimpleHTTPRequestHandler):
+    """Serves static files and handles POST /auth."""
+    auth_event: threading.Event  # injected by LoginServer
+
+    def __init__(self, *args, **kwargs):
+        # Serve files from the Next.js static export directory
+        super().__init__(*args, directory=WEB_OUT_DIR, **kwargs)
+
+    def do_POST(self):
+        if self.path == "/auth":
+            # Consume the body (required to keep the connection clean)
+            length = int(self.headers.get('Content-Length', 0))
+            self.rfile.read(length)
+            # Send CORS headers so the browser page can POST cross-origin
+            self.send_response(200)
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(b'{"ok":true}')
+            # Signal the waiting main thread
+            self.__class__.auth_event.set()
+        else:
+            self.send_error(404)
+
+    def do_OPTIONS(self):
+        """Pre-flight CORS for the POST /auth fetch."""
+        self.send_response(204)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.end_headers()
+
+    def log_message(self, *args):
+        pass  # silence request logs
+
+
+class LoginServer:
+    """Lightweight HTTP server that gates the main GUI behind the login page."""
+
+    def __init__(self):
+        self._port = _get_free_port()
+        self._auth_event = threading.Event()
+        _AuthHandler.auth_event = self._auth_event
+        self._server = socketserver.TCPServer(
+            ('127.0.0.1', self._port), _AuthHandler)
+        self._thread = threading.Thread(
+            target=self._server.serve_forever, daemon=True)
+
+    @property
+    def port(self) -> int:
+        return self._port
+
+    def start(self):
+        self._thread.start()
+
+    def wait_for_auth(self, timeout: float = 300.0) -> bool:
+        """Block until POST /auth received or timeout (seconds)."""
+        return self._auth_event.wait(timeout=timeout)
+
+    def stop(self):
+        self._server.shutdown()
+
+
+def show_login_and_wait():
+    """Show the login page in the default browser and block until auth."""
+    if not os.path.isdir(WEB_OUT_DIR):
+        # Web assets not built yet — skip login gate gracefully
+        print(f"[WARN] web/out not found at {WEB_OUT_DIR!r}, skipping login gate.")
+        return
+
+    server = LoginServer()
+    server.start()
+
+    url = f"http://127.0.0.1:{server.port}/login/?port={server.port}"
+    webbrowser.open(url)
+
+    # Wait up to 5 minutes for the user to sign in
+    server.wait_for_auth(timeout=300.0)
+    server.stop()
+
 
 PROGRESS_MARKERS = {
     "Building geometry": 10,
@@ -662,5 +759,7 @@ class VeloForgeApp(tk.Tk):
 
 
 if __name__ == "__main__":
+    show_login_and_wait()
     app = VeloForgeApp()
     app.mainloop()
+
