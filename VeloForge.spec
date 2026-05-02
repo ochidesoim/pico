@@ -1,14 +1,11 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+
 a = Analysis(
     ['gui.py'],
     pathex=[],
     binaries=[],
-    datas=[
-        # Bundle the Next.js static export so the login page works offline.
-        # gui.py resolves it via sys._MEIPASS/web_out/ at runtime.
-        ('web/out', 'web_out'),
-    ],
+    datas=[('web\\out', 'web\\out'), ('dist\\pipeline\\pico.exe', 'pipeline'), ('configs', 'configs')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -38,5 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['logo.ico'],
+    icon=['D:\\pico\\assets\\veloforge.ico'],
 )

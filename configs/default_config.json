@@ -1,0 +1,24 @@
+{
+  "simulation": {
+    "thicknessCandidates": [
+      18.0,
+      20.0,
+      22.0
+    ],
+    "safetyFactorTarget": 1.5,
+    "loadN": 6000.0,
+    "outputDir": "D:\\pico\\output"
+  },
+  "material": {
+    "youngsModulusMpa": 71700.0,
+    "poissonRatio": 0.33,
+    "densityGPerMm3": 0.00281,
+    "yieldStrengthMpa": 503.0
+  },
+  "tools": {
+    "fTetWildExe": "D:\\pico\\fTetWild\\build\\Release\\FloatTetwild_bin.exe",
+    "ccxExe": "D:\\pico\\calculix\\CalculiX-2.21.0-win-x64\\bin\\ccx.exe",
+    "outputDir": "D:\\pico\\output",
+    "paraviewExe": ""
+  }
+}
