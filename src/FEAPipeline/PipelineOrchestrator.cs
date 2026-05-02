@@ -91,10 +91,10 @@ namespace Leap71.VeloForge.FEA
                 frdText, @"(-\d\.\d{5}E[+-])0(\d\d)", "$1$2");
             File.WriteAllText(_frdFile, frdText);
 
-            Console.WriteLine("[RESL] Converting .frd → .vtu...");
+            Console.WriteLine("[RESL] Converting .frd → .vtk and .vtu...");
             var vtuResult = await _proc.ExecuteAsync(
                 "python",
-                $"-m ccx2paraview \"{_frdFile}\" vtu",
+                $"-m ccx2paraview \"{_frdFile}\" vtk vtu",
                 _outputDir, 120);
 
             if (vtuResult.ExitCode != 0)
