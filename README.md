@@ -144,7 +144,7 @@ FEA stands for **Finite Element Analysis** — it splits the part into thousands
 
 **Technologies used:**
 
-| Tool | What it is | Kid-friendly explanation |
+| Tool | What it is | Explanation |
 |------|-----------|--------------------------|
 | **fTetWild** | Mesh tool | Fills a hollow 3D shape with thousands of tiny pyramids |
 | **CalculiX** | FEA solver | Does the engineering maths to find where parts will break |
