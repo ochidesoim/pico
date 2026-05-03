@@ -71,7 +71,7 @@
 
 **Technologies used:**
 
-| Tool | What it is | Kid-friendly explanation |
+| Tool | What it is | Explanation |
 |------|-----------|--------------------------|
 | **C#** | Programming language | Like Python but used a lot in game engines and industry tools |
 | **PicoGK** | 3D geometry engine | The engine that turns code into actual 3D shapes |
