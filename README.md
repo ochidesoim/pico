@@ -1,11 +1,11 @@
-# 🚀 VeloForge
+# VeloForge
 
 > **Imagine a robot engineer that designs a motorcycle part, tests whether it is strong enough, and fixes it automatically — all without a human touching CAD software.**
 > That is what VeloForge does.
 
 ---
 
-## 🧒 What does VeloForge actually do? (Plain English)
+## What does VeloForge actually do? 
 
 1. You tell it: *"I need a brake bracket for a motorcycle. It must not break under a 600 kg bump load."*
 2. VeloForge **draws** the part in 3D — by writing code, not clicking buttons.
